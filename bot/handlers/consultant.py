@@ -4,12 +4,16 @@ from aiogram import F, Router
 from aiogram.types import Message
 
 from bot import guardrails
+from bot.keyboards import main_menu
 from bot.services import ai
 
 router = Router()
 
 TELEGRAM_LIMIT = 4096
-ERROR_TEXT = "Извините, сейчас не получилось ответить. Попробуйте, пожалуйста, чуть позже."
+ERROR_TEXT = (
+    "Извините, сейчас не получилось ответить. Попробуйте, пожалуйста, чуть позже "
+    "или нажмите «Связаться с человеком», и Марина ответит лично."
+)
 
 _rate_limiter = guardrails.RateLimiter()
 _leak_detector = guardrails.LeakDetector(ai.SYSTEM_PROMPT)
@@ -55,5 +59,7 @@ async def answer_question(message: Message) -> None:
     # 3. Ограничитель на выходе — не раскрывает ли ответ служебные инструкции
     answer = guardrails.filter_output(answer, _leak_detector)
 
-    for part in _chunks(answer):
-        await message.answer(part)
+    parts = list(_chunks(answer))
+    for i, part in enumerate(parts):
+        # меню прикрепляем к последней части: оно остаётся на экране и обновляется у прежних пользователей
+        await message.answer(part, reply_markup=main_menu() if i == len(parts) - 1 else None)
