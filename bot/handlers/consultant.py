@@ -3,12 +3,16 @@ import logging
 from aiogram import F, Router
 from aiogram.types import Message
 
+from bot import guardrails
 from bot.services import ai
 
 router = Router()
 
 TELEGRAM_LIMIT = 4096
 ERROR_TEXT = "Извините, сейчас не получилось ответить. Попробуйте, пожалуйста, чуть позже."
+
+_rate_limiter = guardrails.RateLimiter()
+_leak_detector = guardrails.LeakDetector(ai.SYSTEM_PROMPT)
 
 
 def _chunks(text: str, size: int = TELEGRAM_LIMIT):
@@ -20,9 +24,25 @@ def _chunks(text: str, size: int = TELEGRAM_LIMIT):
 # Обычный текст: не пустой и не команда (/start и т.п.)
 @router.message(F.text, ~F.text.startswith("/"))
 async def answer_question(message: Message) -> None:
+    user_id = message.from_user.id if message.from_user else message.chat.id
+    text = message.text
+
+    # 1. Ограничители на входе — до обращения к модели
+    if not _rate_limiter.allow(user_id):
+        await message.answer(guardrails.TOO_FAST)
+        return
+    if len(text) > guardrails.MAX_INPUT_CHARS:
+        await message.answer(guardrails.TOO_LONG)
+        return
+    if guardrails.is_injection_attempt(text):
+        logging.warning("Заблокирована попытка обхода правил: user=%s text=%r", user_id, text[:100])
+        await message.answer(guardrails.REFUSAL_INJECTION)
+        return
+
+    # 2. Запрос к модели (роль, тема и правила заданы системным промптом)
     await message.bot.send_chat_action(message.chat.id, "typing")
     try:
-        answer = await ai.ask(message.text)
+        answer = await ai.ask(text)
     except Exception:
         logging.exception("DeepSeek request failed")
         await message.answer(ERROR_TEXT)
@@ -31,6 +51,9 @@ async def answer_question(message: Message) -> None:
     if not answer:
         await message.answer(ERROR_TEXT)
         return
+
+    # 3. Ограничитель на выходе — не раскрывает ли ответ служебные инструкции
+    answer = guardrails.filter_output(answer, _leak_detector)
 
     for part in _chunks(answer):
         await message.answer(part)
