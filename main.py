@@ -4,15 +4,18 @@ import sys
 
 from aiogram import Bot, Dispatcher
 
-from bot.config import BOT_TOKEN, DEEPSEEK_API_KEY
+from bot.config import BOT_TOKEN
 from bot.handlers import consultant, start
+from bot.services import ai
 
 
 async def main() -> None:
     if not BOT_TOKEN:
         sys.exit("Не задан BOT_TOKEN. Скопируйте .env.example в .env и вставьте токен от @BotFather.")
-    if not DEEPSEEK_API_KEY:
-        sys.exit("Не задан DEEPSEEK_API_KEY. Добавьте ключ DeepSeek в файл .env.")
+
+    problem = await ai.check_server()
+    if problem:
+        sys.exit(problem)
 
     logging.basicConfig(level=logging.INFO)
     bot = Bot(BOT_TOKEN)

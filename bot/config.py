@@ -8,7 +8,8 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
 
-DEEPSEEK_BASE_URL = "https://api.deepseek.com"
-DEEPSEEK_MODEL = "deepseek-v4-flash"
+# Локальный сервер Ollama. Адрес OpenAI-совместимого API: <сервер>/v1
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1").strip()
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b").strip()
+OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "120"))  # локальные модели отвечают медленнее облачных

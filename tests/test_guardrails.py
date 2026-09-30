@@ -1,7 +1,3 @@
-import os
-
-os.environ.setdefault("DEEPSEEK_API_KEY", "sk-test")
-
 import pytest
 
 from bot import guardrails
