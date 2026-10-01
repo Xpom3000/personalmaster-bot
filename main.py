@@ -5,8 +5,8 @@ import sys
 from aiogram import Bot, Dispatcher
 
 from bot.config import ADMIN_ID, BOT_TOKEN
-from bot import catalog
-from bot.handlers import consultant, lead, menu, start
+from bot import catalog, db
+from bot.handlers import cart, consultant, lead, menu, start
 from bot.services import ai
 
 
@@ -19,6 +19,8 @@ async def main() -> None:
     if not catalog.CATALOG.services:
         sys.exit("В базе знаний (knowledge/personal_master.md) не найдена таблица услуг с колонками «Услуга» и «Цена».")
 
+    db.get_db()  # создаёт файл базы и таблицы при первом запуске
+
     problem = await ai.check_server()
     if problem:
         sys.exit(problem)
@@ -28,6 +30,7 @@ async def main() -> None:
     dp = Dispatcher()
     dp.include_router(start.router)
     dp.include_router(menu.router)        # кнопки меню, витрина, корзина: раньше сценария заявки и консультанта
+    dp.include_router(cart.router)        # корзина и оформление заказа
     dp.include_router(lead.router)        # сценарий заявки: раньше консультанта, чтобы перехватывать ввод
     dp.include_router(consultant.router)  # последним: ловит любой обычный текст
     await dp.start_polling(bot)

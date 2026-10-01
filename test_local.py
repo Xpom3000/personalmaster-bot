@@ -1,16 +1,32 @@
 import asyncio
 from openai import AsyncOpenAI
+from bot.config import OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_TIMEOUT
 
 client = AsyncOpenAI(
-    api_key="test",
-    base_url="http://localhost:11434/v1",
+    api_key="ollama",
+    base_url=OLLAMA_BASE_URL,
+    timeout=OLLAMA_TIMEOUT,
 )
 
-async def test():
-    resp = await client.chat.completions.create(
-        model="deepseek-r1",
-        messages=[{"role": "user", "content": "Привет, ты работаешь локально?"}]
-    )
-    print(resp.choices[0].message.content)
+async def main():
+    print(f"✅ Используем URL: {OLLAMA_BASE_URL}")
+    print(f"✅ Используем модель: '{OLLAMA_MODEL}'")
+    print(f"✅ Таймаут: {OLLAMA_TIMEOUT} сек")
 
-asyncio.run(test())
+    print("Запрос к локальной модели...")
+    try:
+        resp = await client.chat.completions.create(
+            model=OLLAMA_MODEL,
+            messages=[
+                {"role": "system", "content": "Ты — консультант студии маникюра. Отвечай коротко, по делу, без рассуждений."},
+                {"role": "user", "content": "Сколько стоит маникюр с покрытием?"},
+            ],
+            temperature=0.3,
+        )
+        print("\n🗣 Ответ модели:")
+        print(resp.choices[0].message.content)
+    except Exception as e:
+        print(f"\n❌ Ошибка: {e}")
+
+if __name__ == "__main__":
+    asyncio.run(main())

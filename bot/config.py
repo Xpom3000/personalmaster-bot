@@ -19,3 +19,11 @@ except ValueError:
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1").strip()
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b").strip()
 OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "120"))  # локальные модели отвечают медленнее облачных
+
+# Файл базы данных SQLite (корзины и заказы). Папка data/ не попадает в git.
+DATABASE_PATH = Path(os.getenv("DATABASE_PATH", "").strip() or BASE_DIR / "data" / "bot.db")
+
+# ЮKassa: тестовый режим работает с ключами магазина и секретным ключом.
+YOOKASSA_SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "").strip()
+YOOKASSA_SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
+YOOKASSA_RETURN_URL = os.getenv("YOOKASSA_RETURN_URL", "https://example.com/payments/return").strip()

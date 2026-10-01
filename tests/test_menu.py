@@ -1,6 +1,6 @@
 import pytest
 
-from bot import cart, catalog
+from bot import catalog, db
 from bot.catalog import Catalog, parse_services
 from bot.handlers import menu
 from tests import helpers
@@ -8,7 +8,7 @@ from tests.helpers import ADMIN, button_data, button_texts, send, to_admin, to_u
 
 pytestmark = pytest.mark.usefixtures("stand")
 
-MENU = ["Витрина", "Корзина", "Связаться с человеком"]
+MENU = ["🛍 Витрина", "🧺 Корзина", "💬 Связаться с человеком"]
 
 
 def _cards(msgs, uid):
@@ -44,15 +44,15 @@ def test_double_add_to_cart_does_not_duplicate():
     data = button_data(_cards(m, 103)[0][3])[0]
 
     send(u, data=data)
-    assert helpers.answered == ["Услуга добавлена в корзину"]
+    assert helpers.answered == [menu.ADDED.format(name=service.name)]
     assert button_texts(helpers.edits[0]) == ["✓ В корзине"]
-    assert cart.items(103) == [service.id]
+    assert db.get_db().cart_service_ids(103) == [service.id]
 
     send(u, data=data)                                   # двойное нажатие
     assert helpers.answered == ["Эта услуга уже в корзине"] and not helpers.edits
     send(u, data=f"cart:in:{service.id}")                # нажатие на «✓ В корзине»
     assert helpers.answered == ["Эта услуга уже в корзине"]
-    assert cart.items(103) == [service.id]
+    assert db.get_db().cart_service_ids(103) == [service.id]
 
     m = send(u, text="Витрина")                           # новая витрина показывает актуальное состояние
     assert button_texts(_cards(m, 103)[0][3]) == ["✓ В корзине"]
@@ -60,22 +60,11 @@ def test_double_add_to_cart_does_not_duplicate():
 
 
 def test_cart_is_separate_per_user():
-    send({"id": 104, "first": "А"}, data=f"cart:add:{catalog.CATALOG.services[0].id}")
-    send({"id": 105, "first": "Б"}, data=f"cart:add:{catalog.CATALOG.services[0].id}")
-    assert cart.items(104) == cart.items(105) == [catalog.CATALOG.services[0].id]
-    assert helpers.answered == ["Услуга добавлена в корзину"]
-
-
-def test_cart_button_is_a_stub():
-    u = {"id": 106, "first": "Анна"}
-    m = send(u, text="Корзина")
-    text = to_user(m, 106)[0]
-    assert "находится в разработке" in text and "сохранены" not in text
-    assert button_texts(m[0][3]) == MENU
-
-    send(u, data=f"cart:add:{catalog.CATALOG.services[1].id}")
-    text = to_user(send(u, text="Корзина"), 106)[0]
-    assert "Маникюр и педикюр" in text and "сохранены" in text
+    service = catalog.CATALOG.services[0]
+    send({"id": 104, "first": "А"}, data=f"cart:add:{service.id}")
+    send({"id": 105, "first": "Б"}, data=f"cart:add:{service.id}")
+    assert db.get_db().cart_service_ids(104) == db.get_db().cart_service_ids(105) == [service.id]
+    assert helpers.answered == [menu.ADDED.format(name=service.name)]
 
 
 def test_unknown_service_button():
@@ -101,7 +90,7 @@ def test_service_without_price(catalog_with_gaps):
 
     # прямое обращение к «добавить» для такой услуги отклоняется
     send(u, data=f"cart:add:{catalog_with_gaps_id(catalog_with_gaps, 'Особый уход')}")
-    assert helpers.answered == [menu.UNAVAILABLE] and cart.items(108) == []
+    assert helpers.answered == [menu.UNAVAILABLE] and db.get_db().cart_service_ids(108) == []
 
     # «Уточнить стоимость» запускает заявку с темой для владельца
     m = send(u, data=button_data(no_price[3])[0])
@@ -149,4 +138,18 @@ def test_free_dialogue_with_ai_still_works_and_keeps_menu():
     m = send(u, text="Сколько стоит ламинирование бровей?")
     assert helpers.ai_calls == ["Сколько стоит ламинирование бровей?"]
     assert to_user(m, 113) == ["ответ модели"]
+    assert button_texts(m[-1][3]) == MENU
+
+
+def test_rate_limited_response_keeps_main_menu(monkeypatch):
+    from bot.handlers import consultant
+    from bot import guardrails
+
+    monkeypatch.setattr(consultant, "_rate_limiter", guardrails.RateLimiter(limit=1, window=3600))
+    u = {"id": 114, "first": "Анна"}
+
+    send(u, text="Сколько стоит маникюр?")
+    m = send(u, text="Сколько стоит маникюр ещё раз?")
+
+    assert "слишком часто" in to_user(m, 114)[0].lower()
     assert button_texts(m[-1][3]) == MENU

@@ -33,14 +33,14 @@ async def answer_question(message: Message) -> None:
 
     # 1. Ограничители на входе — до обращения к модели
     if not _rate_limiter.allow(user_id):
-        await message.answer(guardrails.TOO_FAST)
+        await message.answer(guardrails.TOO_FAST, reply_markup=main_menu())
         return
     if len(text) > guardrails.MAX_INPUT_CHARS:
-        await message.answer(guardrails.TOO_LONG)
+        await message.answer(guardrails.TOO_LONG, reply_markup=main_menu())
         return
     if guardrails.is_injection_attempt(text):
         logging.warning("Заблокирована попытка обхода правил: user=%s text=%r", user_id, text[:100])
-        await message.answer(guardrails.REFUSAL_INJECTION)
+        await message.answer(guardrails.REFUSAL_INJECTION, reply_markup=main_menu())
         return
 
     # 2. Запрос к модели (роль, тема и правила заданы системным промптом)
@@ -49,17 +49,17 @@ async def answer_question(message: Message) -> None:
         answer = await ai.ask(text)
     except Exception:
         logging.exception("Ollama request failed")
-        await message.answer(ERROR_TEXT)
+        await message.answer(ERROR_TEXT, reply_markup=main_menu())
         return
 
     if not answer:
-        await message.answer(ERROR_TEXT)
+        await message.answer(ERROR_TEXT, reply_markup=main_menu())
         return
 
     # 3. Ограничитель на выходе — не раскрывает ли ответ служебные инструкции
     answer = guardrails.filter_output(answer, _leak_detector)
 
     parts = list(_chunks(answer))
-    for i, part in enumerate(parts):
-        # меню прикрепляем к последней части: оно остаётся на экране и обновляется у прежних пользователей
-        await message.answer(part, reply_markup=main_menu() if i == len(parts) - 1 else None)
+    for part in parts:
+        # Нижнее меню должно оставаться под полем ввода после любого ответа бота.
+        await message.answer(part, reply_markup=main_menu())

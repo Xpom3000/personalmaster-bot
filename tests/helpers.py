@@ -4,12 +4,13 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.types import Update
 
-from bot.handlers import consultant, lead, menu, start
+from bot.handlers import cart, consultant, lead, menu, start
 
 ADMIN = 999
 sent = []        # (chat_id, text, parse_mode, reply_markup)
 answered = []    # тексты ответов на callback
 edits = []       # обновления кнопок под сообщениями
+edited_texts = []  # редактирование текста сообщений: (text, parse_mode, reply_markup)
 ai_calls = []
 
 
@@ -26,12 +27,15 @@ class FakeBot(Bot):
             answered.append(method.text)
         elif name == "EditMessageReplyMarkup":
             edits.append(method.reply_markup)
+        elif name == "EditMessageText":
+            edited_texts.append((method.text, method.parse_mode, method.reply_markup))
         return True
 
 
 dp = Dispatcher()
 dp.include_router(start.router)
 dp.include_router(menu.router)
+dp.include_router(cart.router)
 dp.include_router(lead.router)
 dp.include_router(consultant.router)
 bot = FakeBot("123456:TEST")
@@ -58,7 +62,7 @@ def _update(user, *, text=None, data=None):
 
 def send(user, *, text=None, data=None):
     """Отправить боту сообщение или нажатие кнопки; вернуть всё, что бот отправил в ответ."""
-    sent.clear(); answered.clear(); edits.clear(); ai_calls.clear()
+    sent.clear(); answered.clear(); edits.clear(); edited_texts.clear(); ai_calls.clear()
     asyncio.run(dp.feed_update(bot, _update(user, text=text, data=data)))
     return list(sent)
 

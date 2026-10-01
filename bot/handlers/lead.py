@@ -8,7 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message, User
 
 from bot import catalog, guardrails
-from bot.keyboards import BTN_CONTACT, cancel_only, main_menu, method_choice
+from bot.keyboards import BTN_CONTACT, CONTACT_ICON, cancel_only, display_text, main_menu, method_choice, normalize_button_text
 from bot.services.notify import build_lead_message, notify_owner
 from bot.validators import parse_email, parse_phone
 
@@ -68,9 +68,11 @@ async def _submit(bot: Bot, user: User, method: str, contact: str | None, state:
 
 
 # --- начало сценария: кнопка «Связаться с человеком» (работает в любом состоянии) ---
-@router.message(F.text == BTN_CONTACT)
+@router.message(F.text.in_([BTN_CONTACT, display_text(BTN_CONTACT, CONTACT_ICON)]))
 async def start_lead(message: Message, state: FSMContext) -> None:
     await state.clear()
+    if message.text:
+        message.text = normalize_button_text(message.text)
     await state.set_state(LeadForm.method)
     await message.answer(ASK_METHOD, reply_markup=method_choice())
 

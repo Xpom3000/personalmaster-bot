@@ -21,6 +21,20 @@ class Service:
         """Цена есть, если в ячейке встречается хотя бы одна цифра («—», пусто, «договорная» — нет)."""
         return bool(re.search(r"\d", self.price))
 
+    @property
+    def amount(self) -> int | None:
+        """Точная цена в рублях. None, если цена не фиксированная: варианты («3 000 ₽ или 5 000 ₽»),
+        единица измерения («300 ₽ за два ногтя»), «от …» и т. п. Такие позиции не входят в итог."""
+        match = re.fullmatch(r"(\d[\d\s\u00a0\u202f]*)\s*(?:₽|руб\.?|р\.?)", self.price.strip(), re.IGNORECASE)
+        if not match:
+            return None
+        return int(re.sub(r"\D", "", match.group(1)))
+
+
+def format_price(amount: int) -> str:
+    """1800 -> «1 800 ₽»."""
+    return f"{amount:,}".replace(",", " ") + " ₽"
+
 
 class Catalog:
     def __init__(self, services: list[Service]):
