@@ -17,6 +17,12 @@ STATUS_PENDING = "ожидает оплаты"
 STATUS_PAID = "оплачен"
 
 _SCHEMA = """
+CREATE TABLE IF NOT EXISTS bot_users (
+    user_id    INTEGER PRIMARY KEY,
+    username   TEXT,
+    first_name TEXT,
+    last_seen  TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS cart_items (
     user_id    INTEGER NOT NULL,
     service_id TEXT    NOT NULL,
@@ -201,6 +207,28 @@ class Database:
 
     def orders_count(self, user_id: int) -> int:
         return self._conn.execute("SELECT COUNT(*) FROM orders WHERE user_id = ?", (user_id,)).fetchone()[0]
+
+    def register_user(self, user_id: int, username: str | None, first_name: str | None) -> None:
+        """Запомнить пользователя, который когда-либо писал боту."""
+        with self._conn:
+            self._conn.execute(
+                """
+                INSERT INTO bot_users (user_id, username, first_name, last_seen)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    username = excluded.username,
+                    first_name = excluded.first_name,
+                    last_seen = excluded.last_seen
+                """,
+                (user_id, username, first_name, _now()),
+            )
+
+    def broadcast_users(self) -> list[int]:
+        """Список пользователей, кому можно отправлять анонс."""
+        rows = self._conn.execute(
+            "SELECT user_id FROM bot_users ORDER BY user_id"
+        ).fetchall()
+        return [row["user_id"] for row in rows]
 
 
 _db: Database | None = None

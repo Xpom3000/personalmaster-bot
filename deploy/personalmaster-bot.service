@@ -1,0 +1,18 @@
+[Unit]
+Description=Personalmaster Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/personalmaster-bot
+EnvironmentFile=/opt/personalmaster-bot/.env
+ExecStart=/opt/personalmaster-bot/.venv/bin/python /opt/personalmaster-bot/main.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/personalmaster-bot/bot.log
+StandardError=append:/var/log/personalmaster-bot/bot.log
+
+[Install]
+WantedBy=multi-user.target

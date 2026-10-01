@@ -48,7 +48,7 @@ async def answer_question(message: Message) -> None:
     try:
         answer = await ai.ask(text)
     except Exception:
-        logging.exception("Ollama request failed")
+        logging.exception("DeepSeek request failed")
         await message.answer(ERROR_TEXT, reply_markup=main_menu())
         return
 

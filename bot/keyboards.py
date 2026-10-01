@@ -17,6 +17,7 @@ CONTACT_ICON = "💬"
 BTN_ADD_TO_CART = "Добавить в корзину"
 BTN_IN_CART = "✓ В корзине"
 BTN_ASK_PRICE = "Уточнить стоимость"
+BTN_OPEN_CATALOG = "Открыть витрину"
 BTN_CHECKOUT = "Оформить заказ"
 BTN_PAY = "Оплатить"
 BTN_PAY_NOW = "Оплатить заказ"
@@ -109,4 +110,10 @@ def order_payment_keyboard(order_id: int, *, payment_url: str | None = None) -> 
         )
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=BTN_PAY, callback_data=f"order:pay:{order_id}")]]
+    )
+
+
+def anons_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=BTN_OPEN_CATALOG, callback_data="showcase:open")]]
     )

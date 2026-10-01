@@ -23,6 +23,21 @@ def test_start_shows_persistent_menu():
     assert button_texts(markup) == MENU and markup.is_persistent
 
 
+def test_admin_can_send_anons_to_known_users():
+    db.get_db().register_user(201, "user1", "Пользователь 1")
+    db.get_db().register_user(202, "user2", "Пользователь 2")
+
+    msgs = send({"id": ADMIN, "first": "Админ"}, text="/anons")
+
+    user_msgs = [m for m in msgs if m[0] in {201, 202}]
+    assert len(user_msgs) == 2
+    assert all("У нас новинка!" in m[1] for m in user_msgs)
+    assert all(button_texts(m[3]) == ["Открыть витрину"] for m in user_msgs)
+
+    admin_msg = [m for m in msgs if m[0] == ADMIN][-1][1]
+    assert "Разослано" in admin_msg and "2" in admin_msg
+
+
 def test_showcase_shows_cards_from_knowledge_base():
     u = {"id": 102, "first": "Анна"}
     m = send(u, text="Витрина")

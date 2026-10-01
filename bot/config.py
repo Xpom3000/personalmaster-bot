@@ -21,11 +21,6 @@ DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat").strip()
 DEEPSEEK_TIMEOUT = float(os.getenv("DEEPSEEK_TIMEOUT", "120"))
 
-# Совместимость со старой локальной настройкой Ollama.
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1").strip()
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b").strip()
-OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT", "120"))
-
 # Файл базы данных SQLite (корзины и заказы). Папка data/ не попадает в git.
 DATABASE_PATH = Path(os.getenv("DATABASE_PATH", "").strip() or BASE_DIR / "data" / "bot.db")
 

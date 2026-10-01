@@ -50,6 +50,13 @@ async def show_showcase(message: Message, state: FSMContext) -> None:
         )
 
 
+@router.callback_query(F.data == "showcase:open")
+async def open_showcase(callback: CallbackQuery, state: FSMContext) -> None:
+    await state.clear()
+    await callback.answer()
+    await show_showcase(callback.message, state)
+
+
 @router.callback_query(F.data.startswith(("cart:add:", "cart:in:")))
 async def add_to_cart(callback: CallbackQuery) -> None:
     """«Добавить в корзину». Повторное нажатие (в том числе двойной тап) ничего не дублирует."""

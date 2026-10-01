@@ -2,12 +2,20 @@ import asyncio
 import logging
 import sys
 
-from aiogram import Bot, Dispatcher
+from aiogram import BaseMiddleware, Bot, Dispatcher
 
 from bot.config import ADMIN_ID, BOT_TOKEN
 from bot import catalog, db
 from bot.handlers import cart, consultant, lead, menu, start
 from bot.services import ai
+
+
+class UserTrackingMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        user = getattr(event, "from_user", None)
+        if user and not user.is_bot:
+            db.get_db().register_user(user.id, user.username, user.full_name or user.first_name)
+        return await handler(event, data)
 
 
 async def main() -> None:
@@ -28,6 +36,8 @@ async def main() -> None:
     logging.basicConfig(level=logging.INFO)
     bot = Bot(BOT_TOKEN)
     dp = Dispatcher()
+    dp.message.middleware(UserTrackingMiddleware())
+    dp.callback_query.middleware(UserTrackingMiddleware())
     dp.include_router(start.router)
     dp.include_router(menu.router)        # кнопки меню, витрина, корзина: раньше сценария заявки и консультанта
     dp.include_router(cart.router)        # корзина и оформление заказа
