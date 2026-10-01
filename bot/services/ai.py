@@ -3,10 +3,24 @@ import re
 import httpx
 from openai import AsyncOpenAI
 
-from bot.config import BASE_DIR, OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_TIMEOUT
+from bot.config import (
+    BASE_DIR,
+    DEEPSEEK_API_KEY,
+    DEEPSEEK_BASE_URL,
+    DEEPSEEK_MODEL,
+    DEEPSEEK_TIMEOUT,
+    OLLAMA_BASE_URL,
+    OLLAMA_MODEL,
+    OLLAMA_TIMEOUT,
+)
 
-# Ollama совместим с OpenAI SDK. Ключ не проверяется, но SDK требует непустое значение.
-_client = AsyncOpenAI(api_key="ollama", base_url=OLLAMA_BASE_URL, timeout=OLLAMA_TIMEOUT)
+USE_DEEPSEEK = bool(DEEPSEEK_API_KEY)
+_MODEL_NAME = DEEPSEEK_MODEL if USE_DEEPSEEK else OLLAMA_MODEL
+_BASE_URL = DEEPSEEK_BASE_URL if USE_DEEPSEEK else OLLAMA_BASE_URL
+_TIMEOUT = DEEPSEEK_TIMEOUT if USE_DEEPSEEK else OLLAMA_TIMEOUT
+
+# OpenAI-совместимый клиент: для DeepSeek нужен реальный API-ключ, для Ollama — любой строковый "ключ".
+_client = AsyncOpenAI(api_key=DEEPSEEK_API_KEY or "ollama", base_url=_BASE_URL, timeout=_TIMEOUT)
 
 
 def build_system_prompt() -> str:
@@ -22,10 +36,22 @@ _THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL)
 
 
 async def check_server(transport: httpx.AsyncBaseTransport | None = None) -> str | None:
-    """Проверить, что Ollama запущен и нужная модель скачана.
+    """Проверить доступность модели. При DeepSeek проверяем только API-ключ и соединение."""
+    if USE_DEEPSEEK:
+        if not DEEPSEEK_API_KEY:
+            return "Не задан DEEPSEEK_API_KEY. Скопируйте ключ DeepSeek в .env и перезапустите бота."
+        try:
+            async with httpx.AsyncClient(timeout=5, transport=transport) as http:
+                headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+                resp = await http.get(f"{DEEPSEEK_BASE_URL.rstrip('/')}/models", headers=headers)
+                resp.raise_for_status()
+        except Exception as exc:
+            return (
+                f"Не удалось подключиться к DeepSeek по адресу {DEEPSEEK_BASE_URL} ({exc.__class__.__name__}). "
+                "Проверьте DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL и доступ к интернету."
+            )
+        return None
 
-    Возвращает None, если всё в порядке, иначе понятное описание проблемы.
-    """
     root = OLLAMA_BASE_URL.rstrip("/").removesuffix("/v1")
     try:
         async with httpx.AsyncClient(timeout=5, transport=transport) as http:
@@ -46,7 +72,7 @@ async def check_server(transport: httpx.AsyncBaseTransport | None = None) -> str
 async def ask(question: str) -> str:
     """Отправить вопрос в модель Ollama (с базой знаний студии) и вернуть ответ."""
     response = await _client.chat.completions.create(
-        model=OLLAMA_MODEL,
+        model=_MODEL_NAME,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": question},

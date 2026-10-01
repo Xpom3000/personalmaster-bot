@@ -8,7 +8,7 @@ from tests.helpers import ADMIN, button_data, button_texts, send, to_admin, to_u
 
 pytestmark = pytest.mark.usefixtures("stand")
 
-MENU = ["🛍 Витрина", "🧺 Корзина", "💬 Связаться с человеком"]
+MENU = ["🛍 Витрина", "🧺 Корзина", "💬 Связаться с мастером"]
 
 
 def _cards(msgs, uid):
@@ -119,7 +119,7 @@ def test_empty_catalog(monkeypatch):
 
 def test_menu_button_interrupts_lead_flow():
     u = {"id": 111, "first": "Анна"}
-    send(u, text="Связаться с человеком"); send(u, data="lead:email")
+    send(u, text="Связаться с мастером"); send(u, data="lead:email")
     send(u, text="Витрина")                               # меню доступно всегда и сбрасывает заявку
     m = send(u, text="a@b.com")
     assert helpers.ai_calls == ["a@b.com"] and not to_admin(m)
@@ -127,7 +127,7 @@ def test_menu_button_interrupts_lead_flow():
 
 def test_contact_button_from_menu_still_works():
     u = {"id": 112, "first": "Анна", "username": "anna"}
-    m = send(u, text="Связаться с человеком")
+    m = send(u, text="Связаться с мастером")
     assert "Как вам удобнее связаться" in to_user(m, 112)[0]
     m = send(u, data="lead:telegram")
     assert "Telegram" in to_admin(m)[0][1] and "Тема:" not in to_admin(m)[0][1]

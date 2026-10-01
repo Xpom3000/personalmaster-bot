@@ -7,7 +7,8 @@ from aiogram.types import (
 
 BTN_SHOWCASE = "Витрина"
 BTN_CART = "Корзина"
-BTN_CONTACT = "Связаться с человеком"
+BTN_CONTACT = "Связаться с мастером"
+LEGACY_BTN_CONTACT = "Связаться с человеком"
 
 SHOWCASE_ICON = "🛍"
 CART_ICON = "🧺"

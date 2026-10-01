@@ -8,7 +8,16 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message, User
 
 from bot import catalog, guardrails
-from bot.keyboards import BTN_CONTACT, CONTACT_ICON, cancel_only, display_text, main_menu, method_choice, normalize_button_text
+from bot.keyboards import (
+    BTN_CONTACT,
+    CONTACT_ICON,
+    LEGACY_BTN_CONTACT,
+    cancel_only,
+    display_text,
+    main_menu,
+    method_choice,
+    normalize_button_text,
+)
 from bot.services.notify import build_lead_message, notify_owner
 from bot.validators import parse_email, parse_phone
 
@@ -27,11 +36,11 @@ BAD_PHONE = (
 )
 CHOOSE_BUTTONS = "Пожалуйста, выберите способ связи кнопками ниже или напишите «отмена»."
 NEED_TEXT = "Пожалуйста, отправьте ответ текстом или напишите «отмена»."
-CANCELLED = "Хорошо, заявка отменена. Если понадобится, нажмите «Связаться с человеком»."
+CANCELLED = "Хорошо, заявка отменена. Если понадобится, нажмите «Связаться с мастером»."
 DONE = "Спасибо, заявка принята. Марина скоро свяжется с вами."
 FAILED = "К сожалению, не удалось передать заявку. Пожалуйста, попробуйте чуть позже."
 ALREADY = "Ваши заявки уже приняты. Марина скоро свяжется с вами, пожалуйста, подождите."
-STALE = "Эта кнопка уже неактуальна. Нажмите «Связаться с человеком», чтобы оставить заявку."
+STALE = "Эта кнопка уже неактуальна. Нажмите «Связаться с мастером», чтобы оставить заявку."
 
 CANCEL_WORDS = {"отмена", "отменить", "передумал", "передумала", "не надо", "не хочу", "стоп"}
 
@@ -67,12 +76,17 @@ async def _submit(bot: Bot, user: User, method: str, contact: str | None, state:
     await bot.send_message(user.id, DONE, reply_markup=main_menu())
 
 
-# --- начало сценария: кнопка «Связаться с человеком» (работает в любом состоянии) ---
-@router.message(F.text.in_([BTN_CONTACT, display_text(BTN_CONTACT, CONTACT_ICON)]))
+# --- начало сценария: кнопка «Связаться с мастером» (работает в любом состоянии, совместимость со старым текстом сохранена) ---
+@router.message(
+    F.text.in_([
+        BTN_CONTACT,
+        LEGACY_BTN_CONTACT,
+        display_text(BTN_CONTACT, CONTACT_ICON),
+        display_text(LEGACY_BTN_CONTACT, CONTACT_ICON),
+    ])
+)
 async def start_lead(message: Message, state: FSMContext) -> None:
     await state.clear()
-    if message.text:
-        message.text = normalize_button_text(message.text)
     await state.set_state(LeadForm.method)
     await message.answer(ASK_METHOD, reply_markup=method_choice())
 

@@ -14,7 +14,7 @@ router = Router()
 
 SHOWCASE_INTRO = "Услуги студии «Персональный мастер». Выберите нужную и добавьте её в корзину."
 SHOWCASE_EMPTY = (
-    "Витрина временно недоступна. Пожалуйста, нажмите «Связаться с человеком», "
+    "Витрина временно недоступна. Пожалуйста, нажмите «Связаться с мастером», "
     "и Марина поможет с выбором."
 )
 NO_PRICE_TEXT = "уточняйте у мастера"
@@ -36,8 +36,6 @@ def card_text(service: Service) -> str:
 @router.message(F.text.in_([BTN_SHOWCASE, display_text(BTN_SHOWCASE, SHOWCASE_ICON)]))
 async def show_showcase(message: Message, state: FSMContext) -> None:
     await state.clear()  # меню доступно всегда: незавершённая заявка сбрасывается
-    if message.text:
-        message.text = normalize_button_text(message.text)
     services = catalog.CATALOG.services
     if not services:
         await message.answer(SHOWCASE_EMPTY, reply_markup=main_menu())

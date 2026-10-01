@@ -11,7 +11,7 @@ pytestmark = pytest.mark.usefixtures("stand")
 
 SVC = catalog.CATALOG.services
 GEL, PEDI, EXT, DESIGN, BROWS, LAMINATION, CERT = SVC   # порядок услуг в базе знаний
-MENU = ["🛍 Витрина", "🧺 Корзина", "💬 Связаться с человеком"]
+MENU = ["🛍 Витрина", "🧺 Корзина", "💬 Связаться с мастером"]
 
 
 def user(uid):

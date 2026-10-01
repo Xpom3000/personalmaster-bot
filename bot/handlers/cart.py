@@ -119,8 +119,6 @@ async def _edit(callback: CallbackQuery, text: str, markup: InlineKeyboardMarkup
 @router.message(F.text.in_([BTN_CART, display_text(BTN_CART, CART_ICON)]))
 async def show_cart(message: Message, state: FSMContext) -> None:
     await state.clear()  # меню доступно всегда: незавершённая заявка сбрасывается
-    if message.text:
-        message.text = normalize_button_text(message.text)
     text, markup = build_cart_view(message.from_user.id)
     await message.answer(text, parse_mode="HTML", reply_markup=markup or main_menu())
 
