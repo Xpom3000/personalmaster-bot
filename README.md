@@ -3,15 +3,18 @@
 Telegram-бот: консультирует по услугам через ИИ, собирает заявки и принимает оплату. Подробности — в `CLAUDE.md`.
 
 ## Подготовка Ollama
+
 ```bash
 ollama pull qwen2.5:7b          # или другая модель, имя укажите в .env (OLLAMA_MODEL)
 OLLAMA_CONTEXT_LENGTH=8192 ollama serve   # если сервер уже запущен приложением, задайте переменную в его настройках
 ```
 
 ## Заявки владельцу
+
 Укажите в `.env` `ADMIN_ID` — числовой Telegram ID владельца (его покажет бот @userinfobot). Владелец должен один раз нажать `/start` в этом боте, иначе Telegram не даст боту написать ему.
 
 ## Запуск локально
+
 ```bash
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
@@ -19,17 +22,20 @@ pip install -r requirements.txt
 cp .env.example .env            # вставить BOT_TOKEN и ADMIN_ID, при необходимости поправить модель
 python main.py
 ```
+
 Откройте бота в Telegram: `/start` покажет приветствие, любой обычный текст уйдёт в локальную модель Ollama, а ответ (по базе знаний студии) придёт в чат.
 
 Изменить ответы бота: правьте `knowledge/personal_master.md` (факты) или `prompts/system_prompt.md` (манера и правила) и перезапустите бота.
 
 ## Тесты
+
 ```bash
 pip install pytest
 python -m pytest
 ```
 
 ## Этапы
+
 - [x] 1. Каркас: бот отвечает на `/start`
 - [x] 2. Постоянное меню и витрина услуг из базы знаний
 - [x] 3a. Обычный текст отправляется в нейросеть (сначала DeepSeek)
