@@ -217,10 +217,12 @@ async def check_payment(callback: CallbackQuery) -> None:
         return
 
     if status == "succeeded":
+        # Вот тут обязательно должен быть отступ в 4 пробела
         db.get_db().mark_order_paid(order_id)
         order = db.get_db().get_order(order_id)
         await callback.answer("Спасибо! Оплата подтверждена.", show_alert=True)
         await _edit(callback, build_paid_text(order), None)
+
         admin_text = PAYMENT_ADMIN_TEXT.format(
             id=order.id,
             total=order.total,
@@ -231,5 +233,13 @@ async def check_payment(callback: CallbackQuery) -> None:
         await notify_owner(callback.bot, admin_text)
         return
 
-    await callback.answer(PAYMENT_CHECK_FAILED, show_alert=True)
+    if status == "waiting_for_capture":
+        await callback.answer("Платёж получен, подтверждаем...", show_alert=True)
+        return
+
+    if status == "canceled":
+        await callback.answer("Платёж отменён.", show_alert=True)
+        return
+
+    await callback.answer("Платёж ещё не завершён. Попробуйте ещё раз.", show_alert=True)
     await _edit(callback, build_payment_text(order), build_order_markup(order))
