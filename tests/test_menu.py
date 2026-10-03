@@ -31,7 +31,7 @@ def test_admin_can_send_anons_to_known_users():
 
     user_msgs = [m for m in msgs if m[0] in {201, 202}]
     assert len(user_msgs) == 2
-    assert all("У нас новинка!" in m[1] for m in user_msgs)
+    assert all("в витрине бота собраны все услуги" in m[1] for m in user_msgs)
     assert all(button_texts(m[3]) == ["Открыть витрину"] for m in user_msgs)
 
     admin_msg = [m for m in msgs if m[0] == ADMIN][-1][1]

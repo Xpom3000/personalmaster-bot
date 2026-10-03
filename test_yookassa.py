@@ -7,9 +7,10 @@ import asyncio
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-# ВСТАВЬ СЮДА СВОИ ДАННЫЕ
-SHOP_ID = "1483508"          # например, "123456"
-SECRET_KEY = "test_BzEW9i5C2R8djs-4BUihEVDv5ekTiCFDIeXitphcrC8"   # например, "test_0123456789ABCDEF..."
+# Ключи тестового магазина берутся из .env (YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY) — в код их не вписываем
+load_dotenv()
+SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "").strip()
+SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
 
 async def test_payment():
     url = "https://api.yookassa.ru/v3/payments"

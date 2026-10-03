@@ -27,4 +27,4 @@ DATABASE_PATH = Path(os.getenv("DATABASE_PATH", "").strip() or BASE_DIR / "data"
 # ЮKassa: тестовый режим работает с ключами магазина и секретным ключом.
 YOOKASSA_SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "").strip()
 YOOKASSA_SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
-YOOKASSA_RETURN_URL = os.getenv("YOOKASSA_RETURN_URL", "https://example.com/payments/return").strip()
+YOOKASSA_RETURN_URL = os.getenv("YOOKASSA_RETURN_URL", "https://t.me/personalmaster_bot").strip()
