@@ -8,6 +8,8 @@ import httpx
 import pytest
 from dotenv import load_dotenv
 
+from bot import config
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -29,7 +31,7 @@ async def _run_payment_test():
         "capture": True,
         "confirmation": {
             "type": "redirect",
-            "return_url": "https://example.com/success"
+            "return_url": config.YOOKASSA_RETURN_URL or "https://t.me/marina_beauty_helper_bot"
         },
         "description": "Локальный тест платежа"
     }
