@@ -1,8 +1,12 @@
-import logging
-import uuid
-import httpx
-import base64
 import asyncio
+import base64
+import logging
+import os
+import uuid
+
+import httpx
+import pytest
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
@@ -12,9 +16,11 @@ load_dotenv()
 SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "").strip()
 SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "").strip()
 
-async def test_payment():
+pytestmark = pytest.mark.skipif(not SHOP_ID or not SECRET_KEY, reason="Нужны YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY")
+
+async def _run_payment_test():
     url = "https://api.yookassa.ru/v3/payments"
-    
+
     payload = {
         "amount": {
             "value": 100.0,
@@ -47,7 +53,7 @@ async def test_payment():
 
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.post(url, json=payload, headers=headers)
-        
+
         logger.info("Статус ответа: %s", resp.status_code)
         logger.info("Тело ответа: %s", resp.text)
 
@@ -59,5 +65,10 @@ async def test_payment():
         else:
             logger.error("❌ Ошибка при создании платежа")
 
+
+def test_payment():
+    asyncio.run(_run_payment_test())
+
+
 if __name__ == "__main__":
-    asyncio.run(test_payment())
+    test_payment()
