@@ -35,11 +35,11 @@ async def check_server(transport: httpx.AsyncBaseTransport | None = None) -> str
     if not AIRFAIL_API_KEY:
         return "Не задан AIRFAIL_API_KEY. Скопируйте ключ air.fail в .env и перезапустите бота."
     try:
-        async with httpx.AsyncClient(timeout=5, transport=transport, verify=False) as http:
+        async with httpx.AsyncClient(
+            timeout=5, transport=transport, verify=False
+        ) as http:
             headers = {"Authorization": AIRFAIL_API_KEY}
-            resp = await http.get(
-                f"{AIRFAIL_BASE_URL.rstrip('/')}/public/text", headers=headers
-            )
+            resp = await http.get("https://api.air.fail/public/text", headers=headers)
             resp.raise_for_status()
     except Exception as exc:
         return (
